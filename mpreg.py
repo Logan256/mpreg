@@ -23,5 +23,5 @@ def mpreg(file_path: str, diversity: bool):
 
 if __name__=="__main__":
     print("MPREG")
-    mpreg(r'/Users/logan/Documents/Visual Studio Projects/Code Scrap/mpreg.txt', diversity=False)
+    mpreg(r'mpreg.txt', diversity=False)
     print("MPREG Out")
