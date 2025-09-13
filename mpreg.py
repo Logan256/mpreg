@@ -62,7 +62,7 @@ def write_file(file_path: str, input_gen: Generator[bytearray, None, None]) -> N
                 file.write(bz)
                 if i & 0b11111111 == 0:
                     file.flush()
-        file.flush()
+            file.flush()
     except Exception as err:
         print(f"mpreg aborted [write error]: {err}", file=sys.stderr)
         sys.exit(1)
