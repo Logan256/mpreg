@@ -12,6 +12,8 @@ from typing import Generator
 import sys
 import os
 
+FLUSH_RESET_MASK = 0xFF
+
 ## Generators
 
 # Incubators
@@ -60,7 +62,7 @@ def write_file(file_path: str, input_gen: Generator[bytearray, None, None]) -> N
         with open(file_path, "wb") as file:
             for i, bz in enumerate(input_gen):
                 file.write(bz)
-                if i & 0b11111111 == 0:
+                if i & FLUSH_RESET_MASK == 0:
                     file.flush()
             file.flush()
     except Exception as err:
@@ -71,7 +73,7 @@ def write_std_out(input_gen: Generator[bytearray, None, None]) -> None:
     try:
         for i, bz in enumerate(input_gen):
             sys.stdout.buffer.write(bz)
-            if i & 0b11111111 == 0:
+            if i & FLUSH_RESET_MASK == 0:
                 sys.stdout.buffer.flush()
         sys.stdout.buffer.flush()
     except Exception as err:
@@ -79,13 +81,17 @@ def write_std_out(input_gen: Generator[bytearray, None, None]) -> None:
         sys.exit(1)
 
 
-## Compositer
+## Compositor
 def mpregnate(input_gen: Generator[str, None, None], preg_gen: Generator[str, None, None]) -> Generator[str, None, None]:
     for ch in input_gen:
-        if ch != '—':
-            yield ch
-        else:
+        if ch == "\u2014":
             yield next(preg_gen)
+        elif ch == "\u2E3A":
+            yield next(preg_gen)
+        elif ch == "\u2E3B":
+            yield next(preg_gen)
+        else:
+            yield ch
 
 ## Orchestration
 def read_flags() -> Namespace:
@@ -105,19 +111,19 @@ def read_flags() -> Namespace:
     return parser.parse_args()
 
 def buffer(char_gen: Generator[str, None, None], chunk_size: int) -> Generator[bytearray, None, None]:
-    buffer = bytearray()
+    buf = bytearray()
     for char in char_gen:
-        buffer.extend(char.encode("utf-8"))
-        if len(buffer) >= chunk_size:
-            yield buffer
-            buffer = bytearray()
-    if buffer:
-        yield buffer
+        buf.extend(char.encode("utf-8"))
+        if len(buf) >= chunk_size:
+            yield buf
+            buf = bytearray()
+    if buf:
+        yield buf
 
 def get_optimal_chunk_size() -> int:
     try:
         page_size = os.sysconf('SC_PAGE_SIZE')
-        return max(page_size * 4, 4096)  # At least 4KB
+        return max(page_size * 4, 4096)
     except (AttributeError, OSError):
         return 4096
 
